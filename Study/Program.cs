@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.Diagnostics.Metrics;
+using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.Arm;
@@ -57,8 +59,19 @@ namespace Study
             //ar1 = new int[] { -2, 0, -1 };
             //var xxx = MaxProduct(ar1);
 
-            ar1 = new int[] { 1, 2, 5 };
-            var ans = CoinChange(ar1, 11);
+            ar1 = new int[] { 0, 1, 0, 3, 2, 3 };
+            // var ans = CoinChange(ar1, 11);
+            //var lis = LengthOfLIS(ar1);
+
+            // var x = LongestCommonSubsequence("abcde", "ace");
+
+            //var x = WordBreak("leetcode", new List<string> { "leet", "code" });
+
+            //var x = LadderLength(
+            //"hit", "cog", new List<string> { "hot", "dot", "dog", "lot", "log", "cog" });
+            var edges = new int[3][];
+            //edges.Append([1,1]);
+            int noCompo = CountComponents(5, edges);
             Console.ReadKey();
         }
 
@@ -403,8 +416,6 @@ namespace Study
             targetSumG = targetSum;
             return DfsHasPathSum(root, targetSum);
         }
-
-
         public bool DfsHasPathSum(TreeNode root, int curSum)
         {
             if (root == null) return false;
@@ -806,5 +817,700 @@ namespace Study
             return dp[amount] == amount + 1 ? -1 : dp[amount];
         }
 
+        public bool IsAnagram(string s, string t)
+        {
+            if (s.Length != t.Length) return false;
+            var countS = new Dictionary<string, int> { };
+            var countT = new Dictionary<string, int> { };
+            for (int i = 0; i < s.Length; i++)
+            {
+                countS[s[i].ToString()] = 1 + countS.GetValueOrDefault(s[i].ToString());
+                countT[t[i].ToString()] = 1 + countT.GetValueOrDefault(t[i].ToString());
+            }
+            foreach (var c in countS.Keys)
+            {
+                countS.TryGetValue(c.ToString(), out int one);
+                countT.TryGetValue(c.ToString(), out int two);
+                if (one != two)
+                    return false;
+            }
+            return true;
+        }
+        public int GetSum(int a, int b) //without +/-
+        {
+            while (b != 0)
+            {
+                int temp = (a & b) << 1;
+                a = a ^ b;
+                b = temp;
+            }
+            return a;
+        }
+        public int Trap(int[] height)
+        {
+            if (height.Length <= 0) return 0;
+            int res = 0;
+            int l = 0, r = height.Length - 1;
+            int maxL = height[l], maxR = height[r];
+            while (l < r)
+            {
+                if (maxL < maxR)
+                {
+                    l++;
+                    maxL = Math.Max(maxL, height[l]);
+                    res += maxL - height[l];
+                }
+                else
+                {
+                    r--;
+                    maxR = Math.Max(maxR, height[r]);
+                    res += maxR - height[r];
+                }
+            }
+            return res;
+        }
+
+        public int LargestRectangleArea(int[] heights)
+        {
+            int n = heights.Length, max = 0;
+            var stack = new Stack<int>();
+            for (int i = 0; i <= n; i++)
+            {
+                var height = i < n ? heights[i] : 0;
+                while (stack.Count != 0 && heights[stack.Peek()] > height)
+                {
+                    var currHeight = heights[stack.Pop()];
+                    var prevIndex = stack.Count == 0 ? -1 : stack.Peek();
+                    max = Math.Max(max, currHeight * (i - 1 - prevIndex));
+                }
+                stack.Push(i);
+            }
+
+            return max;
+
+            //if (heights == null || heights.Length == 0)
+            //    return 0;
+
+            //int result = 0;
+            //Stack<int> s = new Stack<int>();
+
+            //for (int i = 0; i <= heights.Length; i++)
+            //{
+            //    int cur = i == heights.Length ? 0 : heights[i];
+
+            //    while (s.Count > 0 && heights[s.Peek()] > cur)
+            //    {
+            //        int h = heights[s.Pop()],
+            //            w = i - 1 - (s.Count == 0 ? -1 : s.Peek());
+
+            //        result = Math.Max(result, h * w);
+            //    }
+
+            //    s.Push(i);
+            //}
+
+            //return result;
+        }
+        public static int LengthOfLIS(int[] nums)
+        {
+            int[] dp = new int[nums.Length];
+            Array.Fill(dp, 1);
+
+            for (int i = nums.Length - 1; i >= 0; i--)
+            {
+                for (int j = i + 1; j < nums.Length; j++)
+                {
+                    if (nums[i] < nums[j])
+                    {
+                        dp[i] = Math.Max(dp[i], 1 + dp[j]);
+                    }
+                }
+            }
+            return dp.Max();
+        }
+
+        public static int LongestCommonSubsequence(string text1, string text2)
+        {
+            int[,] dp = new int[text1.Length + 1, text2.Length + 1];
+            for (int i = 0; i < text1.Length + 1; i++)
+            {
+                for (int j = 0; j < text2.Length + 1; j++)
+                {
+                    dp[i, j] = 0;
+                }
+            }
+            for (int i = text1.Length - 1; i >= 0; i--)
+            {
+                for (int j = text2.Length - 1; j >= 0; j--)
+                {
+                    if (text1[i] == text2[j])
+                        dp[i, j] = 1 + dp[i + 1, j + 1];
+                    else
+                        dp[i, j] = Math.Max(dp[i, j + 1], dp[i + 1, j]);
+                }
+            }
+            return dp[0, 0];
+        }
+        public static bool WordBreak(string s, IList<string> wordDict)
+        {
+            bool[] dp = new bool[s.Length + 1];
+            Array.Fill(dp, false);
+            dp[s.Length] = true;
+
+            for (int i = s.Length - 1; i >= 0; i--)
+            {
+                foreach (var w in wordDict)
+                {
+                    if (i + w.Length <= s.Length && s.Substring(i, w.Length) == w)
+                        dp[i] = dp[i + w.Length];
+
+                    if (dp[i] == true)
+                        break;
+                }
+            }
+            return dp[0];
+
+            //var dp = new List<bool> {
+
+            //}  ;
+            //dp[s.Length] = true;
+            //foreach (var i in Enumerable.Range(0, Convert.ToInt32(Math.Ceiling(Convert.ToDouble(-1 - (s.Length - 1)) / -1))).Select(_x_1 => s.Count - 1 + _x_1 * -1))
+            //{
+            //    foreach (var w in wordDict)
+            //    {
+            //        if (i + w.Count <= s.Count && s.Substring(i,w.Length) == w)
+            //        {
+            //            dp[i] = dp[i + w.Count];
+            //        }
+            //        if (dp[i])
+            //        {
+            //            break;
+            //        }
+            //    }
+            //}
+            //return dp[0];
+        }
+
+        IList<IList<int>> result = new List<IList<int>>();
+        public void backtrack(int index, List<int> path, int total, int[] candidates, int target)
+        {
+            if (total == target)
+            {
+                result.Add(path.ToList());
+                return;
+            }
+
+            if (total > target || index >= candidates.Length) return;
+
+            path.Add(candidates[index]);
+            backtrack(index,
+                      path,
+                      total + candidates[index],
+                      candidates,
+                      target);
+
+            path.Remove(path.Last());
+
+            backtrack(index + 1,
+                      path,
+                      total,
+                      candidates,
+                      target);
+
+        }
+        public IList<IList<int>> CombinationSum(int[] candidates, int target)
+        {
+            backtrack(0, new List<int>(), 0, candidates, target);
+            return result;
+        }
+
+        public class Node
+        {
+            public int val;
+            public IList<Node> neighbors;
+
+            public Node()
+            {
+                val = 0;
+                neighbors = new List<Node>();
+            }
+
+            public Node(int _val)
+            {
+                val = _val;
+                neighbors = new List<Node>();
+            }
+
+            public Node(int _val, List<Node> _neighbors)
+            {
+                val = _val;
+                neighbors = _neighbors;
+            }
+        }
+
+        Dictionary<Node, Node> map = new Dictionary<Node, Node>();
+        public Node CloneGraph(Node node)
+        {
+            if (node == null) return null;
+            if (!map.ContainsKey(node))
+            {
+                map.Add(node, new Node(node.val));
+                foreach (var n in node.neighbors)
+                {
+                    map[node].neighbors.Add(CloneGraph(n));
+                }
+            }
+
+            return map[node];
+        }
+
+
+        public IList<string> FindItinerary(IList<IList<string>> tickets)
+        {
+            var map = new Dictionary<string, List<string>>();
+            foreach (var ticket in tickets)
+            {
+                if (!map.TryGetValue(ticket[0], out var adj))
+                {
+                    adj = new List<string>();
+                    map.Add(ticket[0], adj);
+                }
+                adj.Add(ticket[1]);
+            }
+
+            foreach (var adj in map.Values)
+            {
+                adj.Sort(Comparer<string>.Create((a, b) => string.Compare(b, a)));
+            }
+
+            var res = new Stack<string>();
+            DfsVisit(map, "JFK", res);
+            return res.ToList();
+        }
+
+        private void DfsVisit(Dictionary<string, List<string>> map, string src, Stack<string> ans)
+        {
+            if (map.TryGetValue(src, out var adj))
+            {
+                while (adj.Count > 0)
+                {
+                    var next = adj.Last();
+                    adj.RemoveAt(adj.Count - 1);
+                    DfsVisit(map, next, ans);
+                }
+            }
+            ans.Push(src);
+        }
+        public int FindKthLargest(int[] nums, int k)
+        {
+
+            PriorityQueue<int, int> pq = new PriorityQueue<int, int>();
+
+            for (var i = 0; i < nums.Length; i++)
+            {
+                if (pq.Count < k)
+                    pq.Enqueue(nums[i], nums[i]);
+                else
+                {
+                    if (nums[i] <= pq.Peek()) continue;
+
+                    pq.Dequeue();
+                    pq.Enqueue(nums[i], nums[i]);
+                }
+            }
+            return pq.Dequeue();
+        }
+
+        public class ListNode
+        {
+            public int val;
+            public ListNode next;
+            public ListNode(int val = 0, ListNode next = null)
+            {
+                this.val = val;
+                this.next = next;
+            }
+        }
+        public ListNode AddTwoNumbers(ListNode l1, ListNode l2)
+        {
+            int carry = 0;
+            ListNode dummy = new ListNode(0);
+            ListNode pre = dummy;
+
+            while (l1 != null || l2 != null || carry == 1)
+            {
+                int sum = (l1 == null ? 0 : l1.val) + (l2 == null ? 0 : l2.val) + carry;
+                carry = sum < 10 ? 0 : 1;
+                pre.next = new ListNode(sum % 10);
+                pre = pre.next;
+
+                if (l1 != null)
+                {
+                    l1 = l1.next;
+                }
+
+                if (l2 != null)
+                {
+                    l2 = l2.next;
+                }
+            }
+
+            return dummy.next;
+        }
+
+
+        public bool CanFinish(int numCourses, int[][] prerequisites)
+        {
+
+            IDictionary<int, List<int>> preMap = new Dictionary<int, List<int>>();
+            HashSet<int> visited = new HashSet<int>();
+            for (int i = 0; i < numCourses; i++)
+            {
+                preMap.Add(i, new List<int>());
+            }
+
+            foreach (int[] course in prerequisites)
+            {
+                int courseToTake = course[0];
+                int courseDependOn = course[1];
+                preMap[courseToTake].Add(courseDependOn);
+            }
+
+            foreach (int c in Enumerable.Range(0, numCourses))
+            {
+                if (!DfsGraph(preMap, visited, c))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+        public bool DfsGraph(IDictionary<int, List<int>> preMap, HashSet<int> visited, int crs)
+        {
+            if (visited.Contains(crs))
+            {
+                return false;
+            }
+            if (preMap[crs] == new List<int>())
+            {
+                return true;
+            }
+            visited.Add(crs);
+            foreach (var pre in preMap[crs])
+            {
+                if (!DfsGraph(preMap, visited, pre))
+                {
+                    return false;
+                }
+            }
+            visited.Remove(crs);
+            preMap[crs] = new List<int>();
+            return true;
+        }
+
+        List<int> output = null;
+        public int[] FindOrder(int numCourses, int[][] prerequisites)
+        {
+            IDictionary<int, List<int>> preMap = new Dictionary<int, List<int>>();
+            HashSet<int> visited = new HashSet<int>();
+            HashSet<int> cycle = new HashSet<int>();
+            output = new List<int>();
+            for (int i = 0; i < numCourses; i++)
+            {
+                preMap.Add(i, new List<int>());
+            }
+
+            foreach (int[] course in prerequisites)
+            {
+                int courseToTake = course[0];
+                int courseDependOn = course[1];
+                preMap[courseToTake].Add(courseDependOn);
+            }
+
+            foreach (int c in Enumerable.Range(0, numCourses))
+            {
+                if (DfsGraphTopologicalSort(preMap, visited, cycle, c) == false)
+                {
+                    return Array.Empty<int>();
+                }
+            }
+            return output.ToArray();
+        }
+
+        public bool DfsGraphTopologicalSort(IDictionary<int, List<int>> preMap, HashSet<int> visited, HashSet<int> cycle, int crs)
+        {
+            if (cycle.Contains(crs)) return false;
+            if (visited.Contains(crs)) return true;
+
+            if (preMap[crs] == new List<int>())
+            {
+                return true;
+            }
+            cycle.Add(crs);
+            foreach (var pre in preMap[crs])
+            {
+                if (DfsGraphTopologicalSort(preMap, visited, cycle, pre) == false)
+                {
+                    return false;
+                }
+            }
+            cycle.Remove(crs);
+            visited.Add(crs);
+            output.Add(crs);
+            return true;
+        }
+
+        public int NumIslands(char[][] grid)
+        {
+            int numIslands = 0;
+
+            if (grid?.Length == 0)
+                return 0;
+
+            for (int i = 0; i < grid.Length; i++)
+            {
+                for (int j = 0; j < grid[i].Length; j++)
+                {
+                    char c = grid[i][j];
+                    if (c == '1')
+                    {
+                        numIslands += BfsIsLand(grid, i, j);
+
+                    }
+                }
+
+            }
+            return numIslands;
+        }
+
+        public int BfsIsLand(char[][] grid, int i, int j)
+        {
+            if (i < 0 || i >= grid.Length || j < 0 || j >= grid[0].Length || grid[i][j] == '0')
+            {
+                return 0;
+            }
+
+            grid[i][j] = '0'; //to mark it as visited in iteration.
+            BfsIsLand(grid, i, j + 1);
+            BfsIsLand(grid, i, j - 1);
+            BfsIsLand(grid, i + 1, j);
+            BfsIsLand(grid, i - 1, j);
+            return 1;
+        }
+
+        public static int LadderLength(string beginWord, string endWord, IList<string> wordList)
+        {
+            int count = 1, countInLevel = 0;
+            Queue<string> queue = new Queue<string>();
+            string currentWord = string.Empty;
+            HashSet<string> dictionary = new HashSet<string>(wordList);
+            char[] temp = null;
+
+            queue.Enqueue(beginWord);
+
+            while (queue.Count != 0)
+            {
+                countInLevel = queue.Count();
+
+                while (countInLevel-- > 0)
+                {
+                    currentWord = queue.Dequeue();
+
+                    if (currentWord == endWord)
+                        return count;
+
+                    temp = currentWord.ToCharArray();
+                    for (int i = 0; i <= temp.Length - 1; i++)
+                    {
+                        temp = currentWord.ToCharArray();
+
+                        for (int j = 0; j < 26; j++)
+                        {
+                            temp[i] = (char)('a' + j);
+
+                            if (dictionary.Contains(new string(temp)))
+                            {
+                                queue.Enqueue(new string(temp));
+                                dictionary.Remove(new string(temp));
+                            }
+                        }
+                    }
+                }
+
+                count++;
+            }
+
+            return 0;
+        }
+
+        public int NetworkDelayTime(int[][] times, int n, int k)
+        {
+
+            List<(int node, int weight)>[] adjList = new List<(int node, int weight)>[n + 1];
+
+            for (var i = 0; i <= n; i++)
+            {
+                adjList[i] = new List<(int node, int wht)>();
+            }
+
+            foreach (var time in times)
+            {
+                adjList[time[0]].Add((time[1], time[2]));
+            }
+
+            int[] visited = new int[n + 1];
+            Array.Fill(visited, 0);
+            PriorityQueue<int, int> queue = new();
+
+            queue.Enqueue(k, 0);
+            int res = 0;
+            while (queue.TryDequeue(out int node, out int weight))
+            {
+                if (visited[node] == 1) continue;
+                visited[node] = 1;
+                res = Math.Max(res, weight);
+                foreach (var adj in adjList[node])
+                {
+                    var totalWT = weight + adj.weight;
+                    queue.Enqueue(adj.node, totalWT);
+                }
+            }
+
+            int? visitedCount = visited.Where(e => e == 1)?.Count();
+            return visitedCount == n ? res : -1;
+        }
+
+        private IDictionary<char, HashSet<char>> adj;
+        private HashSet<char> visit;
+        private HashSet<char> cycles;
+        private IList<char> alienOrderOutput;
+
+        public string AlienOrder(string[] words)
+        {
+
+            adj = new Dictionary<char, HashSet<char>>();
+            visit = new HashSet<char>();
+            cycles = new HashSet<char>();
+            alienOrderOutput = new List<char>();
+
+            if (!BuildAdjacencyList(words))
+            {
+                return "";
+            }
+
+            foreach (var c in adj.Keys)
+            {
+                if (!DfsAlienOrder(c))
+                {
+                    return "";
+                }
+            }
+
+            return string.Join("", alienOrderOutput.Reverse());
+        }
+
+        private bool DfsAlienOrder(char c)
+        {
+            if (cycles.Contains(c))
+            {
+                return false;
+            }
+            if (visit.Contains(c))
+            {
+                return true;
+            }
+
+            cycles.Add(c);
+
+            foreach (var other in adj[c])
+            {
+                if (!DfsAlienOrder(other))
+                {
+                    return false;
+                }
+            }
+
+            cycles.Remove(c);
+            visit.Add(c);
+            alienOrderOutput.Add(c);
+
+            return true;
+        }
+
+        private bool BuildAdjacencyList(string[] words)
+        {
+            foreach (var c in string.Join("", words))
+            {
+                if (!adj.ContainsKey(c))
+                {
+                    adj.Add(c, new HashSet<char>());
+                }
+            }
+
+            for (var i = 1; i < words.Length; i++)
+            {
+                var first = words[i - 1];
+                var second = words[i];
+                var f = 0;
+                var s = 0;
+
+                while (f < first.Length && s < second.Length)
+                {
+                    if (first[f] != second[s])
+                    {
+                        adj[first[f]].Add(second[s]);
+                        break;
+                    }
+                    f++;
+                    s++;
+                }
+
+                if (f < first.Length && s == second.Length)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static int noOfConnectedComponents = 0;
+        private static int[] rank;
+
+        public static int CountComponents(int n, int[][] edges)
+        {
+            if (n == 0)
+                return noOfConnectedComponents;
+
+            noOfConnectedComponents = n;
+            rank = new int[n];
+
+            for (int i = 0; i < n; i++)
+                rank[i] = i;
+
+            foreach (int[] edge in edges)
+                Union(edge[0], edge[1]);
+
+            return noOfConnectedComponents;
+        }
+
+        private static void Union(int x, int y)
+        {
+            int p1 = Find(x), p2 = Find(y);
+
+            if (p1 != p2)
+            {
+                rank[p1] = p2;
+                noOfConnectedComponents--;
+            }
+        }
+
+        private static int Find(int n)
+        {
+            if (rank[n] != n)
+                rank[n] = Find(rank[n]);
+
+            return rank[n];
+        }
     }
 }
