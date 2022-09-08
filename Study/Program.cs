@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics.Metrics;
 using System.Drawing;
 using System.Linq;
@@ -71,7 +73,9 @@ namespace Study
             //"hit", "cog", new List<string> { "hot", "dot", "dog", "lot", "log", "cog" });
             var edges = new int[3][];
             //edges.Append([1,1]);
-            int noCompo = CountComponents(5, edges);
+            // int noCompo = CountComponents(5, edges);
+            ar1 = new int[] { 1, 2, 3, 4, 5, 6, 1 };
+            int res = MaxScore(ar1, 3);
             Console.ReadKey();
         }
 
@@ -1474,10 +1478,10 @@ namespace Study
             return true;
         }
 
-        private static int noOfConnectedComponents = 0;
-        private static int[] rank;
+        private int noOfConnectedComponents = 0;
+        private int[] rank;
 
-        public static int CountComponents(int n, int[][] edges)
+        public int CountComponents(int n, int[][] edges)
         {
             if (n == 0)
                 return noOfConnectedComponents;
@@ -1494,7 +1498,7 @@ namespace Study
             return noOfConnectedComponents;
         }
 
-        private static void Union(int x, int y)
+        private void Union(int x, int y)
         {
             int p1 = Find(x), p2 = Find(y);
 
@@ -1505,12 +1509,412 @@ namespace Study
             }
         }
 
-        private static int Find(int n)
+        private int Find(int n)
         {
             if (rank[n] != n)
                 rank[n] = Find(rank[n]);
 
             return rank[n];
+        }
+
+        PriorityQueue<(int, int), int> pq;
+        private HashSet<(int, int)> visited;
+        public int SwimInWater(int[][] grid)
+        {
+            int n = grid.Length;
+            pq = new PriorityQueue<(int, int), int>();
+            visited = new HashSet<(int, int)>();
+            pq.Enqueue((0, 0), grid[0][0]);
+            while (pq.TryDequeue(out var nei, out var priority))
+            {
+                int r = nei.Item1;
+                int c = nei.Item2;
+                visited.Add((r, c));
+
+                if (r == n - 1 && c == n - 1) return priority;
+                EnQueue(r + 1, c, grid, priority);
+                EnQueue(r - 1, c, grid, priority);
+                EnQueue(r, c + 1, grid, priority);
+                EnQueue(r, c - 1, grid, priority);
+            }
+            return -1;
+        }
+
+        private void EnQueue(int r, int c, int[][] grid, int preCost)
+        {
+            if (r >= grid.Length || r < 0) return;
+            if (c >= grid.Length || c < 0) return;
+            if (visited.Contains((r, c))) return;
+
+            pq.Enqueue((r, c), Math.Max(preCost, grid[r][c]));
+        }
+
+        public static int MaxScore(int[] cardPoints, int k)
+        {
+            if (k > cardPoints.Length)
+            {
+                return cardPoints.Sum();
+            }
+            int res = 0, total = 0;
+            int l = 0, r = cardPoints.Length - k;
+            for (int i = r; i < cardPoints.Length; i++)
+                total += cardPoints[i];
+            res = total;
+            while (r < cardPoints.Length)
+            {
+                total += cardPoints[l] - cardPoints[r];
+                res = Math.Max(res, total);
+                l++;
+                r++;
+            }
+            return res;
+        }
+
+        public bool CanAttendMeetings(int[][] intervals)
+        {
+            Array.Sort(intervals, (a, b) => a[0] < b[0] ? -1 : 1);
+            for (int i = 1; i < intervals.Length; i++)
+            {
+                if (intervals[i][0] < intervals[i - 1][1])
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public int MinMeetingRooms(int[][] intervals)
+        {
+            if (intervals == null || intervals.Length == 0)
+                return 0;
+
+            int result = 0;
+            int[] start = new int[intervals.Length], end = new int[intervals.Length];
+
+            for (int i = 0; i < intervals.Length; i++)
+            {
+                start[i] = intervals[i][0];
+                end[i] = intervals[i][1];
+            }
+
+            Array.Sort(start);
+            Array.Sort(end);
+
+            for (int s = 0, e = 0; s < start.Length; s++)
+                if (start[s] < end[e])
+                    result++;
+                else
+                    e++;
+
+            return result;
+        }
+
+        public IList<IList<int>> PacificAtlantic(int[][] heights)
+        {
+            List<IList<int>> res = new();
+            int m = heights.Length, n = heights[0].Length;
+            bool[,] isPacific = new bool[m, n];
+            bool[,] isAtlantic = new bool[m, n];
+            for (int row = 0; row < m; row++)
+            {
+                DFSPacificAtlantic(row, 0, heights, isPacific, heights[row][0]);
+                DFSPacificAtlantic(row, n - 1, heights, isAtlantic, heights[row][n - 1]);
+            }
+
+            for (int col = 0; col < n; col++)
+            {
+                DFSPacificAtlantic(0, col, heights, isPacific, heights[0][col]);
+                DFSPacificAtlantic(m - 1, col, heights, isAtlantic, heights[m - 1][col]);
+            }
+            for (int i = 0; i < m; i++)
+            {
+                for (int j = 0; j < n; j++)
+                {
+                    if (isAtlantic[i, j] && isPacific[i, j])
+                    {
+                        res.Add(new List<int> { i, j });
+                    }
+                }
+            }
+
+            return res;
+        }
+
+        private void DFSPacificAtlantic(int row, int col, int[][] heights, bool[,] visits, int prev)
+        {
+            int m = heights.Length, n = heights[0].Length;
+            if (row < 0 || row >= m || col < 0 || col >= n || visits[row, col] || heights[row][col] < prev)
+                return;
+            visits[row, col] = true;
+            DFSPacificAtlantic(row, col + 1, heights, visits, heights[row][col]);
+            DFSPacificAtlantic(row, col - 1, heights, visits, heights[row][col]);
+            DFSPacificAtlantic(row + 1, col, heights, visits, heights[row][col]);
+            DFSPacificAtlantic(row - 1, col, heights, visits, heights[row][col]);
+        }
+
+
+        int perimeter = 0;
+        public int IslandPerimeter(int[][] grid)
+        {
+            if (grid?.Length == 0)
+                return 0;
+
+            bool[,] visits = new bool[grid.Length, grid[0].Length];
+
+            for (int i = 0; i < grid.Length; i++)
+            {
+                for (int j = 0; j < grid[0].Length; j++)
+                {
+                    if (grid[i][j] == 1)
+                    {
+                        return DfsIslandPerimeter(grid, visits, i, j);
+                    }
+                }
+
+            }
+
+            return perimeter;
+        }
+
+        public int DfsIslandPerimeter(int[][] grid, bool[,] visits, int i, int j)
+        {
+            if (i < 0 || i >= grid.Length || j < 0 || j >= grid[0].Length || grid[i][j] == 0)
+            {
+                return 1;
+            }
+            if (visits[i, j])
+            {
+                return 0;
+            }
+
+            visits[i, j] = true; //to mark it as visited in iteration.
+            perimeter = DfsIslandPerimeter(grid, visits, i, j + 1);
+            perimeter += DfsIslandPerimeter(grid, visits, i + 1, j);
+            perimeter += DfsIslandPerimeter(grid, visits, i, j - 1);
+            perimeter += DfsIslandPerimeter(grid, visits, i - 1, j);
+            return perimeter;
+        }
+
+        public int MinReorder(int n, int[][] connections)
+        {
+            if (connections == null || connections?.Length < 2) return 0;
+
+            Dictionary<int, HashSet<int>> paths = new Dictionary<int, HashSet<int>>();
+            List<int>[] graph = new List<int>[n];
+            foreach (var connection in connections)
+            {
+                if (!paths.ContainsKey(connection[0]))
+                    paths.Add(connection[0], new HashSet<int>());
+
+                paths[connection[0]].Add(connection[1]);
+
+                if (graph[connection[0]] == null)
+                    graph[connection[0]] = new List<int>();
+                graph[connection[0]].Add(connection[1]);
+
+                if (graph[connection[1]] == null)
+                    graph[connection[1]] = new List<int>();
+                graph[connection[1]].Add(connection[0]);
+            }
+            int cnt = 0;
+            HashSet<int> visited = new HashSet<int>();
+            DFSMinReorder(graph, 0, paths, visited, ref cnt);
+            return cnt;
+        }
+
+        private void DFSMinReorder(List<int>[] graph, int u, Dictionary<int, HashSet<int>> paths, HashSet<int> visited, ref int cnt)
+        {
+            visited.Add(u);
+
+            if (graph[u] != null)
+            {
+                foreach (var v in graph[u])
+                {
+                    if (!visited.Contains(v))
+                    {
+                        if (paths.ContainsKey(u) && paths[u].Contains(v))
+                            cnt++;
+
+                        DFSMinReorder(graph, v, paths, visited, ref cnt);
+                    }
+                }
+            }
+        }
+
+        public int MaxAreaOfIsland(int[][] grid)
+        {
+            int r = grid.Length, c = grid[0].Length, area = 0;
+
+            bool[,] visits = new bool[r, c];
+            for (int i = 0; i < r; i++)
+            {
+                for (int j = 0; j < c; j++)
+                {
+                    area = Math.Max(area, DFSMaxAreaOfIsland(i, j, grid, visits));
+                }
+            }
+
+            return area;
+        }
+
+        private int DFSMaxAreaOfIsland(int row, int col, int[][] grid, bool[,] visits)
+        {
+            int m = grid.Length, n = grid[0].Length;
+            if (row < 0 || row >= m || col < 0 || col >= n || visits[row, col] || grid[row][col] == 0)
+                return 0;
+            visits[row, col] = true;
+            return (1 + DFSMaxAreaOfIsland(row, col + 1, grid, visits) +
+             DFSMaxAreaOfIsland(row, col - 1, grid, visits) +
+             DFSMaxAreaOfIsland(row + 1, col, grid, visits) +
+             DFSMaxAreaOfIsland(row - 1, col, grid, visits));
+        }
+
+        public int SnakesAndLadders(int[][] board)
+        {
+            int n = board.Length;
+            bool[,] visits = new bool[n, n];
+            Queue<int> q = new Queue<int>();
+            q.Enqueue(1);
+            int res = 0;
+
+            while (q.Count > 0)
+            {
+                int cnt = q.Count;
+
+                for (int i = 0; i < cnt; i++)
+                {
+                    int cur = q.Dequeue();
+                    if (cur == n * n)
+                        return res;
+
+                    for (int j = 1; j <= 6; j++)
+                    {
+                        int newVal = cur + j;
+
+                        if (newVal > n * n)
+                            break;
+                        var pos = GetPositionForInt(newVal, n);
+                        if (visits[pos.r, pos.c] == true)
+                            continue;
+                        if (board[pos.r][pos.c] == -1)
+                            q.Enqueue(newVal);
+                        else
+                            q.Enqueue(board[pos.r][pos.c]);
+
+                        visits[pos.x, pos.y] = true;
+                    }
+                }
+                res++;
+            }
+
+            return -1;
+        }
+        private (int r, int c) GetPositionForInt(int x, int n)
+        {
+            int r = n - (x - 1) / n - 1;
+            int c = (x - 1) % n;
+            if (r % 2 == n % 2)
+                return (r, n - c - 1);
+            return (r, c);
+        }
+
+
+        public int OpenLock(string[] deadends, string target)
+        {
+            const string start = "0000";
+
+            var deadEnds = deadends.ToHashSet();
+            var visited = new HashSet<string>();
+            if (deadEnds.Contains(start) || deadends.Contains(target)) return -1;
+
+            Queue<string> q = new Queue<string>(new[] { start });
+            visited.Add(start);
+            int res = 0;
+            while (q.Count > 0)
+            {
+                int queueCnt = q.Count;
+                for (int i = 0; i < queueCnt; i++)
+                {
+                    var curr = q.Dequeue();
+                    if (curr == target) return res;
+                    foreach (var nei in GetNeighbors(curr))
+                    {
+                        if (!visited.Contains(nei) && !deadends.Contains(nei))
+                        {
+                            q.Enqueue(nei);
+                            visited.Add(nei);
+                        }
+                    }
+                }
+                res++;
+            }
+            return -1;
+        }
+
+        private List<string> GetNeighbors(string s)
+        {
+            var result = new List<string>();
+            for (int i = 0; i < s.Length; i++)
+            {
+                var charAr1 = s.ToCharArray();
+                charAr1[i] = charAr1[i] == '9' ? '0' : (char)((int)charAr1[i] + 1);
+                result.Add(new string(charAr1));
+                var charAr2 = s.ToCharArray();
+                charAr2[i] = charAr2[i] == '0' ? '9' : (char)((int)charAr2[i] - 1);
+                result.Add(new string(charAr2));
+            }
+            return result;
+        }
+
+        public int OrangesRotting(int[][] grid)
+        {
+            if (grid == null || grid[0].Length == 0)
+                return 0;
+
+            int r = grid.Length, c = grid[0].Length, fresh = 0, time = 0;
+
+            Queue<(int, int)> q = new Queue<(int, int)>();
+
+            for (int i = 0; i < r; i++)
+            {
+                for (int j = 0; j < c; j++)
+                {
+                    if (grid[i][j] == 1)
+                        fresh++;
+                    else if (grid[i][j] == 2)
+                    {
+                        q.Enqueue((i, j));
+                    };
+                }
+            }
+
+            if (fresh == 0)
+                return 0;
+
+            int[,] dir = new int[,] { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } };
+            while (q.Any())
+            {
+                time++;
+                int size = q.Count;
+                for (int i = 0; i < size; i++)
+                {
+                    var curr = q.Dequeue();
+                    for (int j = 0; j < 4; j++)
+                    {
+                        int row = curr.Item1 + dir[j, 0];
+                        int col = curr.Item2 + dir[j, 1];
+
+                        if (row >= 0 && row < r && col >= 0 && col < c && grid[row][col] == 1)
+                        {
+                            grid[row][col] = 2;
+                            q.Enqueue((row, col));
+                            fresh--;
+                        }
+                    }
+                }
+            }
+
+            return fresh == 0 ? time - 1 : -1;
         }
     }
 }
