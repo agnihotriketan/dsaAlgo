@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.Arm;
+using System.Text;
 
 namespace Study
 {
@@ -1958,12 +1959,204 @@ namespace Study
 
             grid2[r][c] = 0;
             bool stillASubIsland = true;
-            stillASubIsland &= DfsSubIsLand(grid1, grid2, r-1, c);
-            stillASubIsland &= DfsSubIsLand(grid1, grid2, r, c+1);
-            stillASubIsland &= DfsSubIsLand(grid1, grid2, r+1, c);
-            stillASubIsland &= DfsSubIsLand(grid1, grid2, r, c-1); 
+            stillASubIsland &= DfsSubIsLand(grid1, grid2, r - 1, c);
+            stillASubIsland &= DfsSubIsLand(grid1, grid2, r, c + 1);
+            stillASubIsland &= DfsSubIsLand(grid1, grid2, r + 1, c);
+            stillASubIsland &= DfsSubIsLand(grid1, grid2, r, c - 1);
 
             return stillASubIsland && grid1[r][c] == 1;
+        }
+
+        public IList<IList<string>> SolveNQueens(int n)
+        {
+            var result = new List<IList<string>>();
+            IList<StringBuilder> board = new List<StringBuilder>();
+            for (int i = 0; i < n; i++)
+            {
+                board.Add(new StringBuilder(n));
+                board[i].Append('.', n);
+
+            }
+            backtrackingNQueens(n, 0, board, result, new HashSet<(int i, int j)>(), new HashSet<(int i, int j)>(), new HashSet<(int i, int j)>());
+            return result;
+        }
+
+        private void backtrackingNQueens(int n, int row, IList<StringBuilder> board, List<IList<string>> result, HashSet<(int i, int j)> col, HashSet<(int i, int j)> positiveDiag, HashSet<(int i, int j)> negativeDiag)
+        {
+            if (n == 0)
+            {
+                result.Add(board.Select(s => s.ToString()).ToList());
+                return;
+            }
+            if (row == board.Count) return;
+
+            for (int c = 0; c < board.Count; c++)
+            {
+                (int i, int j) column = (0, c);
+                int m = Math.Min(row, c);
+                (int i, int j) diag1 = (row - m, c - m);
+                m = Math.Min(row, board.Count - 1 - c);
+                (int i, int j) diag2 = (row - m, c + m);
+
+                if (col.Contains(column) || positiveDiag.Contains(diag1) ||
+                   negativeDiag.Contains(diag2)) continue;
+
+                col.Add(column);
+                positiveDiag.Add(diag1);
+                negativeDiag.Add(diag2);
+
+
+                board[row][c] = 'Q';
+                backtrackingNQueens(n - 1, row + 1, board, result, col, positiveDiag, negativeDiag);
+
+                board[row][c] = '.';
+                col.Remove(column);
+                positiveDiag.Remove(diag1);
+                negativeDiag.Remove(diag2);
+            }
+        }
+
+        public int UniquePaths(int m, int n)
+        {
+            var row = new int[n];
+            Array.Fill(row, 1);
+
+            foreach (var i in Enumerable.Range(0, m - 1))
+            {
+                var newRow = new int[n];
+                Array.Fill(newRow, 1);
+                for (int j = n - 2; j > 0; j--)
+                {
+                    newRow[j] = newRow[j + 1] + row[j];
+                }
+                row = newRow;
+            }
+            return row[0];
+        }
+
+        public bool CanJump(int[] nums)
+        {
+            int goal = nums.Length - 1;
+            for (int i = nums.Length - 1; i >= 0; i--)
+            {
+                if (nums[i] + i >= goal)
+                {
+                    goal = i;
+                }
+            }
+
+            return goal == 0;
+        }
+
+        public int LongestConsecutive(int[] nums)
+        {
+            if (nums.Length < 2) return nums.Length;
+
+            int longest = 0;
+            var set = new HashSet<int>(nums);
+
+            foreach (var item in set)
+            {
+                if (!set.Contains(item - 1))
+                {
+                    var length = 0;
+                    while (set.Contains(item + length))
+                    {
+                        length++;
+                        longest = Math.Max(longest, length);
+
+                    }
+                }
+            }
+            return longest;
+        }
+        public bool ValidTree(int n, int[][] edges)
+        {
+            if (n == 0) return true;
+
+            var adj = new HashSet<int>[n];
+
+            for (int i = 0; i < n; i++)
+            {
+                adj[i] = new HashSet<int>();
+            }
+            foreach (var edge in edges)
+            {
+                var e1 = edge[0];
+                var e2 = edge[1];
+                adj[e1].Add(e2);
+                adj[e2].Add(e1);
+            }
+            var visited = new bool[n];
+
+            var res = DfsValidTree(adj, 0, visited);
+
+            if (visited.Any(c => !c)) return false;
+            return res;
+        }
+
+        private bool DfsValidTree(HashSet<int>[] adj, int current, bool[] visited)
+        {
+            if (visited[current]) return false;
+            visited[current] = true;
+
+            var nextLevel = adj[current];
+            foreach (var level in nextLevel)
+            {
+                adj[level].Remove(current);
+                if (!DfsValidTree(adj, level, visited))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public int[][] Insert(int[][] intervals, int[] newInterval)
+        {
+            var result = new List<int[]>();
+            int i = 0;
+            while (i < intervals.Length && intervals[i][1] < newInterval[0])
+                result.Add(intervals[i++]);
+
+
+            while (i < intervals.Length && intervals[i][0] <= newInterval[1])
+            {
+                newInterval[0] = Math.Min(newInterval[0], intervals[i][0]);
+                newInterval[1] = Math.Max(newInterval[1], intervals[i][1]);
+                i++;
+            }
+            result.Add(newInterval);
+            while (i < intervals.Length)
+                result.Add(intervals[i++]);
+
+            return result.ToArray();
+        }
+        public int[][] Merge(int[][] intervals)
+        {
+            if (intervals == null || intervals.Length == 0 || intervals.Length == 1)
+                return intervals;
+
+            List<int[]> res = new List<int[]>();
+
+            intervals = intervals.OrderBy(x => x[0]).ToArray();
+            int s = intervals[0][0],
+            e = intervals[0][1];
+            for (int i = 1; i < intervals.Length; i++)
+            {
+                if (intervals[i][0] > e)
+                {
+                    res.Add(new int[] { s, e });
+                    s = intervals[i][0];
+                    e = intervals[i][1];
+                }
+                else
+                    e = Math.Max(e, intervals[i][1]);
+            }
+
+            res.Add(new int[] { s, e });
+
+            return res.ToArray();
         }
     }
 }
