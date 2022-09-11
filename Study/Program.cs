@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Diagnostics.Metrics;
 using System.Drawing;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.Arm;
 using System.Text;
@@ -56,7 +57,7 @@ namespace Study
             ar2 = new int[] { 3, 4 };
             ar1 = new int[] { };
             ar2 = new int[] { 2, 3 };
-            //var median = FindMedianSortedArrays(ar1, ar2);
+            var median = FindMedianSortedArrays(ar1, ar2);
             //var maxReplacement = CharacterReplacement("AABABBA", 1);
 
             //ar1 = new int[] { -2, 0, -1 };
@@ -75,8 +76,8 @@ namespace Study
             var edges = new int[3][];
             //edges.Append([1,1]);
             // int noCompo = CountComponents(5, edges);
-            ar1 = new int[] { 1, 2, 3, 4, 5, 6, 1 };
-            int res = MaxScore(ar1, 3);
+            //ar1 = new int[] { 1, 2, 3, 4, 5, 6, 1 };
+            //int res = MaxScore(ar1, 3);
             Console.ReadKey();
         }
 
@@ -531,6 +532,57 @@ namespace Study
             return res;
         }
 
+        public int[] SearchRange(int[] nums, int target)
+        {
+            int first = -1, last = -1;
+
+            first = searchEle(nums, target, true);
+            if (first == -1)
+                return new int[] { first, last };
+
+            last = searchEle(nums, target, false);
+
+
+            return new int[] { first, last };
+        }
+
+        public int searchEle(int[] nums, int target, bool isStart)
+        {
+
+            int n = nums.Length;
+            int start = 0, end = nums.Length - 1;
+
+            while (start <= end)
+            {
+                int mid = (start + end) / 2;
+                if (nums[mid] == target)
+                {
+                    if (isStart)
+                    {
+                        if (mid == start || nums[mid - 1] != target)
+                        {
+                            return mid;
+                        }
+                        end = mid - 1;
+                    }
+                    else
+                    {
+                        if (mid == end || nums[mid + 1] != target)
+                        {
+                            return mid;
+                        }
+                        start = mid + 1;
+                    }
+                }
+                else if (nums[mid] > target)
+                    end = mid - 1;
+                else
+                    start = mid + 1;
+
+            }
+            return -1;
+        }
+
         public static double FindMedianSortedArrays(int[] nums1, int[] nums2)
         {
             if (nums1.Length <= 0 && nums2.Length == 1)
@@ -541,44 +593,49 @@ namespace Study
             {
                 return nums1[0];
             }
-            var A = nums1;
-            var B = nums2;
 
-            var total = nums1.Length + nums2.Length;
-            var half = total / 2;
-            if (B.Length < A.Length)
+            var m = nums1.Length;
+            var n = nums2.Length;
+            if (m > n)
             {
-                A = B;
-                B = A;
+                return FindMedianSortedArrays(nums2, nums1);
             }
-            var l = 0;
-            var r = A.Length - 1;
-            while (true)
+            var total = m + n;
+            var half = (total + 1) / 2;
+            var left = 0;
+            var right = m;
+            var result = 0.0;
+            while (left <= right)
             {
-                var i = (l + r) / 2;
-                var j = half - i - 2;
-                var Aleft = i >= 0 ? A[i] : double.NegativeInfinity;
-                var Aright = i + 1 < A.Length ? A[i + 1] : double.PositiveInfinity;
-                var Bleft = j >= 0 ? B[j] : double.NegativeInfinity;
-                var Bright = j + 1 < B.Length ? B[j + 1] : double.PositiveInfinity;
+                var i = left + (right - left) / 2;
+                var j = half - i;
+                var left1 = (i > 0) ? nums1[i - 1] : int.MinValue;
+                var right1 = (i < m) ? nums1[i] : int.MaxValue;
+                var left2 = (j > 0) ? nums2[j - 1] : int.MinValue;
+                var right2 = (j < n) ? nums2[j] : int.MaxValue;
 
-                if (Aleft <= Bright && Bleft <= Aright)
+                if (left1 <= right2 && left2 <= right1)
                 {
-                    if (total % 2 != 0)
+                    if (total % 2 == 0)
                     {
-                        return Math.Min(Aright, Bright);
+                        result = (Math.Max(left1, left2) + Math.Min(right1, right2)) / 2.0;
                     }
-                    return (Math.Max(Aleft, Bleft) + Math.Min(Aright, Bright)) / 2;
+                    else
+                    {
+                        result = Math.Max(left1, left2);
+                    }
+                    break;
                 }
-                else if (Aleft > Bright)
+                else if (left1 > right2)
                 {
-                    r = i - 1;
+                    right = i - 1;
                 }
                 else
                 {
-                    l = i + 1;
+                    left = i + 1;
                 }
             }
+            return result;
         }
         public int MaxProfit(int[] prices)
         {
@@ -1858,10 +1915,10 @@ namespace Study
             for (int i = 0; i < s.Length; i++)
             {
                 var charAr1 = s.ToCharArray();
-                charAr1[i] = charAr1[i] == '9' ? '0' : (char)((int)charAr1[i] + 1);
+                charAr1[i] = charAr1[i] == '9' ? '0' : (char)(charAr1[i] + 1);
                 result.Add(new string(charAr1));
                 var charAr2 = s.ToCharArray();
-                charAr2[i] = charAr2[i] == '0' ? '9' : (char)((int)charAr2[i] - 1);
+                charAr2[i] = charAr2[i] == '0' ? '9' : (char)(charAr2[i] - 1);
                 result.Add(new string(charAr2));
             }
             return result;
@@ -2157,6 +2214,242 @@ namespace Study
             res.Add(new int[] { s, e });
 
             return res.ToArray();
+        }
+        public int EraseOverlapIntervals(int[][] intervals)
+        {
+            if (intervals.Length == 0)
+                return 0;
+            Array.Sort(intervals, (x, y) => x[1].CompareTo(y[1]));
+            int res = 0;
+            int end = intervals[0][1];
+            for (int i = 1; i < intervals.Length; i++)
+            {
+                if (intervals[i][0] > end)
+                {
+                    end = intervals[i][0];
+                }
+                else res++;
+            }
+            return res;
+        }
+
+        public bool HasCycle(ListNode head)
+        {
+            if (head == null) return false;
+
+            ListNode slow = head, fast = head.next;
+
+            while (slow != fast)
+            {
+                if (fast == null || fast.next == null)
+                {
+                    return false;
+                }
+                slow = slow.next;
+                fast = fast.next.next;
+            }
+            return true;
+        }
+        public ListNode MergeTwoLists(ListNode list1, ListNode list2)
+        {
+            /* if (list1 == null) return list2;
+             if (list2 == null) return list1;
+             if (list1.val < list2.val)
+             {
+                 list1.next = MergeTwoLists(list1.next, list2);
+                 return list1;
+             }
+             list2.next = MergeTwoLists(list1, list2.next);
+             return list2;*/
+            ListNode dummy = new ListNode();
+            ListNode tail = dummy;
+
+            while (list1 != null && list2 != null)
+            {
+                if (list1.val < list2.val)
+                {
+                    tail.next = list1;
+                    list1 = list1.next;
+                }
+                else
+                {
+                    tail.next = list2;
+                    list2 = list2.next;
+                }
+                tail = tail.next;
+            }
+            if (list1 != null)
+            {
+                tail.next = list1;
+            }
+            else if (list2 != null)
+            {
+                tail.next = list2;
+            }
+            return dummy.next;
+        }
+        public ListNode MergeKLists(ListNode[] lists)
+        {
+            if (lists == null || lists.Length == 0) return null;
+
+            return MergeListsByBinSearch(lists, 0, lists.Length - 1);
+        }
+
+        private ListNode MergeListsByBinSearch(ListNode[] lists, int i, int j)
+        {
+            if (j == i)
+            {
+                return lists[i];
+            }
+            else
+            {
+                int mid = i + (j - i) / 2;
+
+                var left = MergeListsByBinSearch(lists, i, mid);
+                var right = MergeListsByBinSearch(lists, mid + 1, j);
+                return MergeTwoLists(left, right);
+            }
+        }
+
+        public IList<int> CountSmaller(int[] nums)
+        {
+            var sortedNums = new List<int>();
+            var result = new int[nums.Length];
+
+            for (int i = nums.Length - 1; i >= 0; i--)
+            {
+                int left = 0;
+                int right = sortedNums.Count;
+
+                while (left < right)
+                {
+                    var mid = left + (right - left) / 2;
+                    if (sortedNums[mid] >= nums[i]) right = mid;
+                    else left = mid + 1;
+                }
+
+                result[i] = left;
+                sortedNums.Insert(left, nums[i]);
+            }
+
+            return result;
+        }
+
+        public int peakIndexInMountainArray(int[] arr)
+        {
+            int lo = 0, hi = arr.Length - 1;
+            while (lo < hi)
+            {
+                int mi = lo + (hi - lo) / 2;
+                if (arr[mi] < arr[mi + 1])
+                    lo = mi + 1;
+                else
+                    hi = mi;
+            }
+            return lo;
+        }
+        public ListNode removeNthFromEnd(ListNode head, int n)
+        {
+            ListNode dummy = new ListNode(0)
+            {
+                next = head
+            };
+            int length = 0;
+            ListNode first = head;
+            while (first != null)
+            {
+                length++;
+                first = first.next;
+            }
+            length -= n;
+            first = dummy;
+            while (length > 0)
+            {
+                length--;
+                first = first.next;
+            }
+            first.next = first.next.next;
+            return dummy.next;
+        }
+        public void ReorderList(ListNode head)
+        {
+            ListNode slow = head, fast = head.next;
+            //middle
+            while (fast?.next != null)
+            {
+                slow = slow.next;
+                fast = fast.next.next;
+            }
+
+            //reverse
+            var second = slow.next;
+            ListNode pre = null;
+            slow.next = null;
+            while (second != null)
+            {
+                ListNode temp = second.next;
+                second.next = pre;
+                pre = second;
+                second = temp;
+            }
+
+            //merge
+            var first = head;
+            second = pre;
+            while (second != null)
+            {
+                var temp1 = first.next;
+                var temp2 = second.next;
+                first.next = second;
+                second.next = temp1;
+                first = temp1;
+                second = temp2;
+            }
+        }
+
+        public IList<int> SpiralOrder(int[][] matrix)
+        {
+            List<int> result = new List<int>();
+            int top = 0;
+            int left = 0;
+            int right = matrix[0].Length - 1;
+            int bottom = matrix.Length - 1;
+
+            while (true)
+            {
+                //Left to Right
+                for (int i = left; i <= right; i++)
+                {
+                    result.Add(matrix[top][i]);
+                }
+                top++;
+                if (left > right || top > bottom) break;
+
+                //Top to Bottom
+                for (int i = top; i <= bottom; i++)
+                {
+                    result.Add(matrix[i][right]);
+                }
+                right--;
+                if (left > right || top > bottom) break;
+
+                //Right to Left
+                for (int i = right; i >= left; i--)
+                {
+                    result.Add(matrix[bottom][i]);
+                }
+                bottom--;
+                if (left > right || top > bottom) break;
+
+                //Bottom to Top
+                for (int i = bottom; i >= top; i--)
+                {
+                    result.Add(matrix[i][left]);
+                }
+                left++;
+                if (left > right || top > bottom) break;
+            }//Repeat
+            return result;
         }
     }
 }
