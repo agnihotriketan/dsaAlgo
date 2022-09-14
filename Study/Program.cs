@@ -2369,6 +2369,8 @@ namespace Study
                 first = first.next;
             }
             first.next = first.next.next;
+
+            char.IsLetterOrDigit
             return dummy.next;
         }
         public void ReorderList(ListNode head)
@@ -2450,6 +2452,251 @@ namespace Study
                 if (left > right || top > bottom) break;
             }//Repeat
             return result;
+        }
+
+        public int CountSubstrings(string s)
+        {
+            int res = 0;
+            for (int i = 0; i < s.Length; i++)
+            {
+                res += CountPali(s, i, i);
+                res += CountPali(s, i, i + 1);
+            }
+            return res;
+        }
+
+        private int CountPali(string s, int i, int v)
+        {
+            int res = 0;
+            while (i >= 0 && v < s.Length && s[i] == s[v])
+            {
+                res++;
+                i--; v++;
+            }
+            return res;
+        }
+
+
+        int maxPathSum = Int32.MinValue;
+
+        public int MaxPathSum(TreeNode root)
+        {
+            DfsMaxPathSum(root);
+            return maxPathSum;
+        }
+
+        private int DfsMaxPathSum(TreeNode root)
+        {
+            if (root == null)
+                return 0;
+
+            int leftMax = DfsMaxPathSum(root.left),
+                rightMax = DfsMaxPathSum(root.right),
+                currentMax = 0;
+
+            currentMax = Math.Max(currentMax, Math.Max(leftMax + root.val, rightMax + root.val));
+            maxPathSum = Math.Max(maxPathSum, leftMax + root.val + rightMax);
+
+            return currentMax;
+        }
+
+        public int[] TopKFrequent(int[] nums, int k)
+        {
+            int[] arr = new int[k];
+            var dict = new Dictionary<int, int>();
+            for (int i = 0; i < nums.Length; i++)
+            {
+                if (dict.ContainsKey(nums[i]))
+                {
+                    dict[nums[i]]++;
+                }
+                else
+                {
+                    dict.Add(nums[i], 1);
+                }
+            }
+
+            var pq = new PriorityQueue<int, int>();
+            foreach (var key in dict.Keys)
+            {
+                pq.Enqueue(key, dict[key]);
+                if (pq.Count > k) pq.Dequeue();
+            }
+            int i2 = k;
+            while (pq.Count > 0)
+            {
+                arr[--i2] = pq.Dequeue();
+            }
+            return arr;
+        }
+
+        public class Engineer
+        {
+            public int speed;
+            public int efficiency;
+            public Engineer(int speed, int efficiency)
+            {
+                this.speed = speed;
+                this.efficiency = efficiency;
+            }
+
+        }
+
+        public int MaxPerformance(int n, int[] speed, int[] efficiency, int k)
+        {
+            List<Engineer> engineers = new();
+            for (int i = 0; i < n; i++)
+            {
+                engineers.Add(new Engineer(speed[i], efficiency[i]));
+            }
+
+            engineers = engineers.OrderByDescending(x => x.efficiency).ToList();
+            var queue = new PriorityQueue<int, int>();
+            long speedTotal = 0, result = 0;
+            foreach (var engineer in engineers)
+            {
+                if (queue.Count > k - 1)
+                    speedTotal -= queue.Dequeue();
+                queue.Enqueue(engineer.speed, engineer.speed);
+                speedTotal += engineer.speed;
+                result = Math.Max(result, speedTotal * engineer.efficiency);
+            }
+
+            return (int)(result % 1000000007);
+        }
+
+        public IList<string> LetterCombinations(string digits)
+        {
+            var lettersMap = new Dictionary<char, string>
+            {
+                {'2', "abc"},
+                {'3', "def"},
+                {'4', "ghi"},
+                {'5', "jkl"},
+                {'6', "mno"},
+                {'7', "pqrs"},
+                {'8', "tuv"},
+                {'9', "wxyz"}
+            };
+
+            var result = new List<string>();
+
+            if (!string.IsNullOrEmpty(digits))
+                Backtrack(result, digits, lettersMap, "", 0);
+
+            return result;
+        }
+
+        void Backtrack(List<string> result, string digits, Dictionary<char, string> lettersMap, string curString, int start)
+        {
+            if (curString.Length == digits.Length)
+            { result.Add(curString); return; }
+
+            foreach (var c in lettersMap[digits[start]])
+            {
+                Backtrack(result, digits, lettersMap, curString + c, start + 1);
+            }
+        }
+
+        public bool BtreeGameWinningMove(TreeNode root, int n, int x)
+        { 
+            if (root == null) return false;
+
+            if (root.val == x)
+            {
+                int leftCount = count(root.left);
+                int rightCount = count(root.right);
+                int parentCount = n - (leftCount + rightCount + 1);
+
+                return parentCount > (leftCount + rightCount) || leftCount > (parentCount + rightCount) || rightCount > (leftCount + parentCount);
+            }
+
+            return BtreeGameWinningMove(root.left, n, x) || BtreeGameWinningMove(root.right, n, x);
+        }
+
+        private int count(TreeNode node)
+        {
+            if (node == null) return 0;
+            return count(node.left) + count(node.right) + 1;
+        }
+    }
+
+    class MedianFinder
+    {
+
+        private PriorityQueue<int, int> smallHeap; //small elements - maxHeap
+        private PriorityQueue<int, int> largeHeap; //large elements - minHeap
+
+        public MedianFinder()
+        {
+            smallHeap = new PriorityQueue<int, int>();
+            largeHeap = new PriorityQueue<int, int>();
+        }
+
+        public void addNum(int num)
+        {
+            smallHeap.Enqueue(num, num);
+            if (
+                smallHeap.Count - largeHeap.Count > 1 ||
+                !(largeHeap.Count <= 0) &&
+                smallHeap.Peek() > largeHeap.Peek()
+            )
+            {
+                if (smallHeap.Count > 0)
+                {
+                    int ele = smallHeap.Dequeue();
+                    largeHeap.Enqueue(ele, ele);
+                }
+            }
+            if (largeHeap.Count - smallHeap.Count > 1)
+            {
+                if (largeHeap.Count > 0)
+                {
+                    int ele = largeHeap.Dequeue();
+                    smallHeap.Enqueue(ele, ele);
+                }
+            }
+        }
+
+        public double findMedian()
+        {
+            if (smallHeap.Count == largeHeap.Count)
+            {
+                return (double)(largeHeap.Peek() + smallHeap.Peek()) / 2;
+            }
+            else if (smallHeap.Count > largeHeap.Count)
+            {
+                return (double)smallHeap.Peek();
+            }
+            else
+            {
+                return (double)largeHeap.Peek();
+            }
+        }
+    }
+
+    public class MedianFinderBin
+    {
+        List<int> Nums;
+        public MedianFinderBin()
+        {
+            Nums = new List<int>();
+        }
+
+        public void AddNum(int num)
+        {
+            int index = Nums.BinarySearch(num);
+            if (index < 0)
+            {
+                index = ~index;
+            }
+            Nums.Insert(index, num);
+        }
+
+        public double FindMedian()
+        {
+            int count = Nums.Count;
+            return count % 2 == 0 ? (double)((Nums[count / 2 - 1] + Nums[count / 2]) * 0.5) : Nums[count / 2];
         }
     }
 }
