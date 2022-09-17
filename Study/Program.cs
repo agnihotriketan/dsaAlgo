@@ -9,6 +9,7 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.Arm;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Study
 {
@@ -144,8 +145,6 @@ namespace Study
                 return "";
             }
             int length = rs - l;
-
-
 
             return resLen != 0 ? s.Substring(l < 0 ? 0 : l, length + 1) : "";
         }
@@ -2599,7 +2598,7 @@ namespace Study
         }
 
         public bool BtreeGameWinningMove(TreeNode root, int n, int x)
-        { 
+        {
             if (root == null) return false;
 
             if (root.val == x)
@@ -2619,84 +2618,344 @@ namespace Study
             if (node == null) return 0;
             return count(node.left) + count(node.right) + 1;
         }
-    }
 
-    class MedianFinder
-    {
-
-        private PriorityQueue<int, int> smallHeap; //small elements - maxHeap
-        private PriorityQueue<int, int> largeHeap; //large elements - minHeap
-
-        public MedianFinder()
+        public int MaximumInvitations(int[][] grid)
         {
-            smallHeap = new PriorityQueue<int, int>();
-            largeHeap = new PriorityQueue<int, int>();
-        }
+            int m = grid.Length; // boys
+            int n = grid[0].Length; // girls
 
-        public void addNum(int num)
-        {
-            smallHeap.Enqueue(num, num);
-            if (
-                smallHeap.Count - largeHeap.Count > 1 ||
-                !(largeHeap.Count <= 0) &&
-                smallHeap.Peek() > largeHeap.Peek()
-            )
+            int[] girlFixed = new int[n];
+
+            for (int i = 0; i < n; i++)
             {
-                if (smallHeap.Count > 0)
+                girlFixed[i] = -1;
+            }
+
+            int invitations = 0;
+
+            for (int i = 0; i < m; i++)
+            {
+                var seenGirl = new HashSet<int>();
+
+                if (dfsInvitations(grid, i, seenGirl, girlFixed))
                 {
-                    int ele = smallHeap.Dequeue();
-                    largeHeap.Enqueue(ele, ele);
+                    invitations++;
                 }
             }
-            if (largeHeap.Count - smallHeap.Count > 1)
+            return invitations;
+        }
+
+        private bool dfsInvitations(int[][] grid, int boy, HashSet<int> seenGirl, int[] girlFixed)
+        {
+            int m = grid.Length; // boys
+            int n = grid[0].Length; // girls
+
+            for (int i = 0; i < n; i++)
             {
-                if (largeHeap.Count > 0)
+                if (grid[boy][i] == 1 && !seenGirl.Contains(i))
                 {
-                    int ele = largeHeap.Dequeue();
-                    smallHeap.Enqueue(ele, ele);
+                    seenGirl.Add(i);
+                    if (girlFixed[i] == -1 || dfsInvitations(grid, girlFixed[i], seenGirl, girlFixed))
+                    {
+                        girlFixed[i] = boy;
+                        return true;
+                    }
                 }
             }
+            return false;
         }
 
-        public double findMedian()
+        //2128
+        public bool RemoveOnes(int[][] grid)
         {
-            if (smallHeap.Count == largeHeap.Count)
+            if (grid == null || grid.Length == 0)
+                throw new ArgumentException("Invalid Input.");
+
+            int m = grid.Length, n = grid[0].Length;
+            for (int i = 1; i < m; i++)
             {
-                return (double)(largeHeap.Peek() + smallHeap.Peek()) / 2;
+                for (int j = 1; j < n; j++)
+                {
+                    if ((grid[i][j] ^ grid[i - 1][j]) != (grid[i][j - 1] ^ grid[i - 1][j - 1]))
+                        return false;
+                }
             }
-            else if (smallHeap.Count > largeHeap.Count)
+
+            return true;
+        }
+
+        //562
+        public int LongestLine(int[][] mat)
+        {
+            if (mat == null || mat.Length == 0 || mat[0].Length == 0) return 0;
+            int r = mat.Length, c = mat[0].Length, result = 0;
+            var dp = new int[r + 2, c + 2, 4];
+            for (int i = 1; i <= r; i++)
             {
-                return (double)smallHeap.Peek();
+                for (int j = 1; j <= c; j++)
+                {
+                    if (mat[i - 1][j - 1] == 1)
+                    {
+                        dp[i, j, 0] = dp[i - 1, j, 0] + 1;
+                        dp[i, j, 1] = dp[i - 1, j - 1, 1] + 1;
+                        dp[i, j, 2] = dp[i, j - 1, 2] + 1;
+                    }
+                }
             }
-            else
+
+            for (int i = 1; i <= r; i++)
             {
-                return (double)largeHeap.Peek();
+                for (int j = c; j >= 1; j--)
+                {
+                    if (mat[i - 1][j - 1] == 1)
+                    {
+                        dp[i, j, 3] = dp[i - 1, j + 1, 3] + 1;
+                        result = new int[] { result, dp[i, j, 0], dp[i, j, 1], dp[i, j, 2], dp[i, j, 3] }.Max();
+                    }
+                }
             }
+
+            return result;
+        }
+
+        //1048
+        public int LongestStrChain(string[] words)
+        {
+            var dic = new Dictionary<string, int>();
+            foreach (var word in words.OrderBy(w => w.Length))
+                for (int i = 0; i < word.Length; i++)
+                {
+                    string word2 = word.Remove(i, 1);
+                    dic[word] = Math.Max(dic.ContainsKey(word) ? dic[word] : 1,
+                        dic.ContainsKey(word2) ? dic[word2] + 1 : 1);
+                }
+
+            return dic.Values.Max();
+        }
+
+        public bool DifferByOne(string[] dict)
+        {
+            HashSet<string> pSet = new HashSet<string>();
+            char[][] charArray = new char[dict.Length][];
+
+            for (int i = 0; i < dict.Length; i++)
+            {
+                charArray[i] = dict[i].ToCharArray();
+            }
+
+            for (int i = 0; i < dict[0].Length; i++)
+            {
+                pSet.Clear();
+                for (int j = 0; j < dict.Length; j++)
+                {
+                    char tmp = charArray[j][i];
+                    charArray[j][i] = '*';
+                    var newS = new string(charArray[j]);
+                    charArray[j][i] = tmp;
+
+                    if (pSet.Contains(newS))
+                    {
+                        return true;
+                    }
+
+                    pSet.Add(newS);
+                }
+            }
+
+            return false;
+        }
+
+        public int shortestWay(String source, String target)
+        {
+            int j = 0; // Pointer in target
+            int minSubseq = 0;
+
+            while (j < target.Length)
+            {
+                bool matched = false; // When true, subsequences of source can match target 
+                for (int i = 0; i < source.Length && j < target.Length; i++)
+                {
+                    if (source[i] == target[j])
+                    {
+                        j++;
+                        matched = true;
+                    }
+                }
+                if (!matched)
+                    return -1;
+                minSubseq++;
+            }
+            return minSubseq;
+        }
+
+        public interface Robot
+        {
+            // Returns true if the cell in front is open and robot moves into the cell.
+            // Returns false if the cell in front is blocked and robot stays in the current cell.
+            public bool Move();
+
+            // Robot will stay in the same cell after calling turnLeft/turnRight.
+            // Each turn will be 90 degrees.
+            public void TurnLeft();
+            public void TurnRight();
+
+            // Clean the current cell.
+            public void Clean();
+        }
+        private readonly (int, int)[] directions = { (-1, 0), (0, 1), (1, 0), (0, -1) };
+        //private ISet<(int, int)> visited = new HashSet<(int, int)>();
+        private Robot robot;
+
+        public void CleanRoom(Robot robot)
+        {
+            this.robot = robot;
+            Backtrack(0, 0, 0);
+        }
+
+        public void GoBack()
+        {
+            robot.TurnRight();
+            robot.TurnRight();
+            robot.Move();
+            robot.TurnRight();
+            robot.TurnRight();
+        }
+
+        public void Backtrack(int row, int col, int direction)
+        {
+            robot.Clean();
+            visited.Add((row, col));
+            for (int i = 0; i < 4; i++)
+            {
+                int newD = (direction + i) % 4;
+                int newRow = row + directions[newD].Item1;
+                int newCol = col + directions[newD].Item2;
+
+                if (!visited.Contains((newRow, newCol)) && robot.Move())
+                {
+                    Backtrack(newRow, newCol, newD);
+                    GoBack();
+                }
+
+                robot.TurnRight();
+            }
+        }
+
+        public class Interval
+        {
+            public int start;
+            public int end;
+
+            public Interval() { }
+            public Interval(int _start, int _end)
+            {
+                start = _start;
+                end = _end;
+            }
+        }
+        public IList<Interval> EmployeeFreeTime(IList<IList<Interval>> schedule)
+        {
+            List<Interval> intervals = schedule.SelectMany(sch => sch).ToList();
+
+            intervals.Sort((a, b) => a.start.CompareTo(b.start));
+            List<Interval> result = new List<Interval>();
+            if (intervals.Count <= 1)
+            {
+                return result;
+            }
+
+            int maxEnd = intervals[0].end;
+            for (int i = 1; i < intervals.Count; i++)
+            {
+                if (intervals[i].start > maxEnd)
+                {
+                    result.Add(new Interval(maxEnd, intervals[i].start));
+                }
+
+                maxEnd = Math.Max(maxEnd, intervals[i].end);
+            }
+
+            return result;
         }
     }
+}
 
-    public class MedianFinderBin
+class MedianFinder
+{
+
+    private PriorityQueue<int, int> smallHeap; //small elements - maxHeap
+    private PriorityQueue<int, int> largeHeap; //large elements - minHeap
+
+    public MedianFinder()
     {
-        List<int> Nums;
-        public MedianFinderBin()
-        {
-            Nums = new List<int>();
-        }
+        smallHeap = new PriorityQueue<int, int>();
+        largeHeap = new PriorityQueue<int, int>();
+    }
 
-        public void AddNum(int num)
+    public void addNum(int num)
+    {
+        smallHeap.Enqueue(num, num);
+        if (
+            smallHeap.Count - largeHeap.Count > 1 ||
+            !(largeHeap.Count <= 0) &&
+            smallHeap.Peek() > largeHeap.Peek()
+        )
         {
-            int index = Nums.BinarySearch(num);
-            if (index < 0)
+            if (smallHeap.Count > 0)
             {
-                index = ~index;
+                int ele = smallHeap.Dequeue();
+                largeHeap.Enqueue(ele, ele);
             }
-            Nums.Insert(index, num);
         }
-
-        public double FindMedian()
+        if (largeHeap.Count - smallHeap.Count > 1)
         {
-            int count = Nums.Count;
-            return count % 2 == 0 ? (double)((Nums[count / 2 - 1] + Nums[count / 2]) * 0.5) : Nums[count / 2];
+            if (largeHeap.Count > 0)
+            {
+                int ele = largeHeap.Dequeue();
+                smallHeap.Enqueue(ele, ele);
+            }
         }
     }
+
+    public double findMedian()
+    {
+        if (smallHeap.Count == largeHeap.Count)
+        {
+            return (double)(largeHeap.Peek() + smallHeap.Peek()) / 2;
+        }
+        else if (smallHeap.Count > largeHeap.Count)
+        {
+            return (double)smallHeap.Peek();
+        }
+        else
+        {
+            return (double)largeHeap.Peek();
+        }
+    }
+}
+
+public class MedianFinderBin
+{
+    List<int> Nums;
+    public MedianFinderBin()
+    {
+        Nums = new List<int>();
+    }
+
+    public void AddNum(int num)
+    {
+        int index = Nums.BinarySearch(num);
+        if (index < 0)
+        {
+            index = ~index;
+        }
+        Nums.Insert(index, num);
+    }
+
+    public double FindMedian()
+    {
+        int count = Nums.Count;
+        return count % 2 == 0 ? (double)((Nums[count / 2 - 1] + Nums[count / 2]) * 0.5) : Nums[count / 2];
+    }
+}
 }
