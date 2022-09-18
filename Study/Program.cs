@@ -2877,6 +2877,111 @@ namespace Study
 
             return result;
         }
+
+        public int wordsTyping(String[] sentence, int rows, int cols)
+        {
+            int currLength = 0, wordNo = 0, timesFit = 0;
+
+            int spaceRequired = 0; // The length needed for a complete sentence to be fitted.
+            foreach (var word in sentence)
+            {
+                spaceRequired += word.Length + 1;
+            }
+            int rowTimesFit = (cols + 1) / spaceRequired; // The default fit times for a row.
+            int defaultLength = rowTimesFit * spaceRequired;
+
+            for (int i = 0; i < rows; i++)
+            {
+                currLength = defaultLength;
+                timesFit += rowTimesFit;
+                while (currLength + sentence[wordNo].Length <= cols)
+                {
+                    currLength += sentence[wordNo].Length;
+                    if (currLength < cols)
+                        currLength++;
+                    wordNo++;
+                    if (wordNo == sentence.Length)
+                    {
+                        wordNo = 0;
+                        timesFit++;
+                    }
+                }
+            }
+
+            return timesFit;
+        }
+         
+        public int MinCostClimbingStairs(int[] cost)
+        {
+            cost.Append(0);
+            for (int i = cost.Length - 2; i >= 0; i--)
+            {
+                cost[i] += Math.Min(cost[i + 1], cost[i + 2]);
+            }
+
+            return Math.Min(cost[0], cost[1]);
+        }
+
+        public int Rob(int[] nums)
+        {
+            int rob1 = 0, rob2 = 0;
+            foreach (var n in nums)
+            {
+                int temp = Math.Max(rob1 + n, rob2);
+                rob1 = rob2;
+                rob2 = temp;
+            }
+            return rob2;
+        }
+
+        public int RobHelper(int[] nums)
+        {
+            int rob1 = 0, rob2 = 0;
+            foreach (var n in nums)
+            {
+                int temp = Math.Max(rob1 + n, rob2);
+                rob1 = rob2;
+                rob2 = temp;
+            }
+            return rob2;
+        }
+
+        public int Rob2(int[] nums)
+        {
+            var n = nums.Length;
+            if (n == 0) return 0;
+            if (n == 1) return nums[0];
+
+            var numList = new List<int>(nums);
+            numList.RemoveAt(0);
+            var candidate1 = RobHelper(numList.ToArray());
+
+            numList = new List<int>(nums);
+            numList.RemoveAt(n - 1);
+            var cnadidate2 = RobHelper(numList.ToArray());
+            return Math.Max(candidate1, cnadidate2);
+        }
+
+        public int NumDecodings(string s)
+        {
+            List<int> dp = Enumerable.Repeat(1, s.Length + 1).ToList();
+
+            for (var i = s.Length - 1; i >= 0; i--)
+            {
+                if (s[i] == '0')
+                    dp[i] = 0;
+                else
+                    dp[i] = dp[i + 1];
+
+                if (i + 1 < s.Length && (
+                    s[i] == '1' ||
+                    (s[i] == '2' && "0123456".Contains(s[i + 1]))
+                ))
+                    dp[i] += dp[i + 2];
+            }
+
+            return dp[0];
+        }
     }
 }
 
