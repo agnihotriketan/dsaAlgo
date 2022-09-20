@@ -2910,7 +2910,7 @@ namespace Study
 
             return timesFit;
         }
-         
+
         public int MinCostClimbingStairs(int[] cost)
         {
             cost.Append(0);
@@ -2982,12 +2982,77 @@ namespace Study
 
             return dp[0];
         }
+
+        public bool CanPartition(int[] nums)
+        {
+            if (nums.Sum() % 2 == 1) return false;
+
+            var dp = new HashSet<int>();
+            dp.Add(0);
+
+            int target = nums.Sum() / 2;
+            for (int i = nums.Length - 1; i >= 0; i--)
+            {
+                foreach (var t in dp)
+                {
+                    dp.Add(t + nums[i]);
+                    dp.Add(t);
+                }
+            }
+
+            return dp.Contains(target);
+        }
+
+
+        private int m;
+        private int n;
+        private int[][] matrix;
+        public bool SearchMatrix(int[][] matrix, int target)
+        {
+            if (matrix == null || matrix.Length == 0 || matrix[0].Length == 0)
+            {
+                return false;
+            }
+            this.matrix = matrix;
+            m = matrix.Length;
+            n = matrix[0].Length;
+            int begin = 0;
+            int end = m * n - 1;
+            return binarySearch(begin, end, target);
+        }
+
+        private int helper(int index)
+        {
+            int x = index / n;
+            int y = index - x * n;
+            return matrix[x][y];
+        }
+
+        private bool binarySearch(int begin, int end, int target)
+        {
+            while (begin <= end)
+            {
+                int mid = (begin + end) / 2;
+                if (helper(mid) == target)
+                {
+                    return true;
+                }
+                else if (helper(mid) > target)
+                {
+                    end = mid - 1;
+                }
+                else
+                {
+                    begin = mid + 1;
+                }
+            }
+            return false;
+        }
     }
 }
 
 class MedianFinder
-{
-
+{ 
     private PriorityQueue<int, int> smallHeap; //small elements - maxHeap
     private PriorityQueue<int, int> largeHeap; //large elements - minHeap
 
