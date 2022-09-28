@@ -3048,11 +3048,165 @@ namespace Study
             }
             return false;
         }
+
+
+        List<int[]> list = new List<int[]>();
+
+        public int[] AmountPainted(int[][] paint)
+        {
+            int n = paint.Length;
+            int[] res = new int[n];
+            for (int i = 0; i < n; i++)
+            {
+                res[i] = AddInterval(paint[i]);
+            }
+            return res;
+        }
+        private int AddInterval(int[] cur)
+        {
+            List<int[]> merge = new List<int[]>();
+            int i = 0, res = cur[1] - cur[0];
+            while (i < list.Count && list[i][1] < cur[0])
+            {
+                merge.Add(list[i++]);
+            }
+            while (i < list.Count && list[i][0] <= cur[1])
+            {
+                int save = Math.Min(cur[1], list[i][1]) - Math.Max(cur[0], list[i][0]);
+                res -= Math.Max(save, 0);
+                cur[0] = Math.Min(list[i][0], cur[0]);
+                cur[1] = Math.Max(list[i][1], cur[1]);
+                i++;
+            }
+            merge.Add(cur);
+            while (i < list.Count)
+            {
+                merge.Add(list[i++]);
+            }
+            list = merge;
+            return res;
+        }
+
+
+        /*no of square */
+        int[][] cntPoints = new int[1001][];
+        List<int[]> points = new List<int[]>();
+
+        public void Add(int[] p)
+        {
+            cntPoints[p[0]][p[1]] += 1;
+            points.Add(p);
+        }
+
+        public int Count(int[] p1)
+        {
+            int x1 = p1[0], y1 = p1[1], ans = 0;
+            foreach (int[] p3 in points)
+            {
+                int x3 = p3[0], y3 = p3[1];
+                if (Math.Abs(x1 - x3) == 0 || Math.Abs(x1 - x3) != Math.Abs(y1 - y3))
+                    continue; // Skip empty square or invalid square point!
+                ans += cntPoints[x1][y3] * cntPoints[x3][y1];
+            }
+            return ans;
+        }
+
+
+        public String longestWord(String[] words)
+        {
+            Array.Sort(words);
+            var built = new HashSet<string>();
+            String res = "";
+            foreach (String w in words)
+            {
+                if (w.Length == 1 || built.Contains(w.Substring(0, w.Length - 1)))
+                {
+                    res = w.Length > res.Length ? w : res;
+                    built.Add(w);
+                }
+            }
+            return res;
+        }
+        public string FindReplaceString(string s, int[] indices, string[] sources, string[] targets)
+        {
+            StringBuilder b = new StringBuilder();
+
+            for (int i = 0; i < s.Length;)
+            {
+                int ii = -1;
+                for (int j = 0; j < indices.Length; j++)
+                {
+                    if (indices[j] == i)
+                    {
+                        ii = j;
+                        break;
+                    }
+                }
+                if (ii != -1 && (i + sources[ii].Length <= s.Length) && s.Substring(i, sources[ii].Length) == sources[ii])
+                {
+                    b.Append(targets[ii]);
+                    i += sources[ii].Length;
+                }
+                else
+                {
+                    b.Append(s[i]);
+                    i++;
+                }
+            }
+
+            return b.ToString();
+        }
+        public string FindReplaceString2(string s, int[] indexes, string[] sources, string[] targets)
+        {
+            Dictionary<int, (int, string)> map = new Dictionary<int, (int, string)>();
+            for (int i = 0; i < indexes.Length; i++)
+            {
+                if (!s.Substring(indexes[i], sources[i].Length).Equals(sources[i])) continue;
+                map[indexes[i]] = (sources[i].Length, targets[i]);
+            }
+            StringBuilder sb = new StringBuilder();
+            int c = 0;
+            while (c < s.Length)
+            {
+                if (map.ContainsKey(c))
+                {
+                    sb.Append(map[c].Item2);
+                    c += map[c].Item1;
+                }
+                else
+                {
+                    sb.Append(s[c]);
+                    c++;
+                }
+            }
+            return sb.ToString();
+        }
+
+        public bool checkInclusion(String s1, String s2)
+        {
+            if (s1.Length > s2.Length)
+                return false;
+            int[] s1map = new int[26];
+            for (int i = 0; i < s1.Length; i++)
+                s1map[s1[i] - 'a']++;
+            for (int i = 0; i <= s2.Length - s1.Length; i++)
+            {
+                int[] s2map = new int[26];
+                for (int j = 0; j < s1.Length; j++)
+                {
+                    s2map[s2[(i + j)] - 'a']++;
+                }
+                if (Array.Equals(s1map, s2map))
+                    return true;
+            }
+            return false;
+        }
+         
     }
 }
 
 class MedianFinder
-{ 
+{
     private PriorityQueue<int, int> smallHeap; //small elements - maxHeap
     private PriorityQueue<int, int> largeHeap; //large elements - minHeap
 
