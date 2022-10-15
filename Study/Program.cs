@@ -1858,7 +1858,7 @@ namespace Study
                         else
                             q.Enqueue(board[pos.r][pos.c]);
 
-                        visits[pos.x, pos.y] = true;
+                        // visits[pos.x, pos.y] = true;
                     }
                 }
                 res++;
@@ -2368,8 +2368,7 @@ namespace Study
                 first = first.next;
             }
             first.next = first.next.next;
-
-            char.IsLetterOrDigit
+             
             return dummy.next;
         }
         public void ReorderList(ListNode head)
@@ -3201,7 +3200,247 @@ namespace Study
             }
             return false;
         }
+
+
+        public int MaximumDetonation(int[][] bombs)
+        {
+            int maxBombsDetonate = 0;
+            for (int i = 0; i < bombs.Length; i++)
+                maxBombsDetonate = Math.Max(maxBombsDetonate, DfsDetonation(i, new bool[bombs.Length], bombs));
+            return maxBombsDetonate;
+        }
+
+        private int DfsDetonation(int currentBomb, bool[] visit, int[][] bombs)
+        {
+            int count = 0;
+            visit[currentBomb] = true;
+            // Check with all bombs whose range is not checked with current bomb.
+            for (int i = 0; i < bombs.Length; i++)
+                if (!visit[i] && IsInRange(bombs[currentBomb], bombs[i]))
+                    count += DfsDetonation(i, visit, bombs);
+            return 1 + count;
+        }
+
+        private bool IsInRange(int[] a, int[] b)
+        {
+            // a^2+b^2 <= c^2
+            long dx = a[0] - b[0], dy = a[1] - b[1], r = a[2];
+            return dx * dx + dy * dy <= r * r;
+        }
+        public bool CanTransform(string start, string end)
+        {
+            int l = 0, r = 0;
+            for (int i = 0; i < start.Length; i++)
+            {
+                if (start[i] == 'L') l++;
+                if (start[i] == 'R') r++;
+                if (end[i] == 'L') l--;
+                if (end[i] == 'R') r--;
+                //System.out.println(l + " " + r);
+                bool fixedL = start[i] == 'L' && end[i] == 'L';
+                bool fixedR = start[i] == 'R' && end[i] == 'R';
+                if (l > 0 || (l < 0 && (r != 0 || fixedR)) || r < 0 || (r > 0 && (l != 0 || fixedL))) return false;
+            }
+            return l == 0 && r == 0;
+        }
+
+        public int minHeightShelves(int[][] books, int shelf_width)
+        {
+            int[] dp = new int[books.Length + 1];
+
+            dp[0] = 0;
+
+            for (int i = 1; i <= books.Length; ++i)
+            {
+                int width = books[i - 1][0];
+                int height = books[i - 1][1];
+                dp[i] = dp[i - 1] + height;
+                for (int j = i - 1; j > 0 && width + books[j - 1][0] <= shelf_width; --j)
+                {
+                    height = Math.Max(height, books[j - 1][1]);
+                    width += books[j - 1][0];
+                    dp[i] = Math.Min(dp[i], dp[j - 1] + height);
+                }
+            }
+            return dp[books.Length];
+        }
+
+        public void WallsAndGates(int[][] rooms)
+        {
+
+            if (rooms == null || rooms.Length == 0)
+                return;
+
+            int INF = Int32.MaxValue, gate = 0, wall = -1;
+            int m = rooms.Length, n = rooms[0].Length;
+
+            Queue<(int, int)> queue = new Queue<(int, int)>();
+            for (int i = 0; i < m; i++)
+            {
+                for (int j = 0; j < n; j++)
+                {
+                    if (rooms[i][j] == gate)
+                        queue.Enqueue((i, j));
+                }
+            }
+
+            int[,] dir = new int[,] { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } };
+            while (queue.Count > 0)
+            {
+                var curr = queue.Dequeue();
+                for (int i = 0; i < 4; i++)
+                {
+                    int r = curr.Item1 + dir[i, 0];
+                    int c = curr.Item2 + dir[i, 1];
+
+                    if (r >= 0 && r < m && c >= 0 && c < n && rooms[r][c] == INF)
+                    {
+                        rooms[r][c] = rooms[curr.Item1][curr.Item2] + 1;
+                        queue.Enqueue((r, c));
+                    }
+                }
+            }
+        }
          
+        public int NumDistinct(string s, string t)
+        {
+            int n = s.Length + 1;
+            int m = t.Length + 1;
+            int[,] memo = new int[n,m];
+             
+            for (int i = 0; i <= n; i++)
+            {
+                memo[i, 0] = -1;
+            } 
+            return recursion(s, t, 0, 0, memo);
+        }
+
+        public int recursion(String s, String t, int sIdx, int tIdx, int[,] memo)
+        {
+            if (memo[sIdx,tIdx] != -1)
+            {
+                return memo[sIdx,tIdx];
+            }
+
+            if (tIdx >= t.Length)
+            {
+                return 1;
+            }
+
+            if (sIdx >= s.Length)
+            {
+                return 0;
+            }
+
+            if (t[tIdx] == s[sIdx])
+            {
+                memo[sIdx,tIdx] =
+                    recursion(s, t, sIdx + 1, tIdx + 1, memo) +
+                    recursion(s, t, sIdx + 1, tIdx, memo);
+                return memo[sIdx,tIdx];
+            }
+
+            memo[sIdx,tIdx] = recursion(s, t, sIdx + 1, tIdx, memo);
+            return memo[sIdx,tIdx];
+        }
+
+        //Dictionary<string, List<(int time, string val)>> cache;
+        //public TimeMap()
+        //{
+        //    cache = new Dictionary<string, List<(int, string)>>();
+        //}
+
+        //public void Set(string key, string value, int timestamp)
+        //{
+        //    if (!cache.ContainsKey(key))
+        //    {
+        //        cache.Add(key, new());
+        //    }
+        //    cache[key].Add((timestamp, value));
+        //}
+
+        //public string Get(string key, int timestamp)
+        //{
+        //    if (!cache.ContainsKey(key)) return "";
+        //    var cmp = Comparer<(int time, string val)>.Create((a, b) => a.time.CompareTo(b.time));
+        //    int len = cache[key].Count;
+
+        //    if (timestamp > cache[key][len - 1].time)
+        //    {
+        //        return cache[key][len - 1].val;
+        //    }
+        //    else if (timestamp < cache[key][0].time)
+        //    {
+        //        return "";
+        //    }
+
+        //    var index = cache[key].BinarySearch((timestamp, ""), cmp);
+        //    if (index < 0)
+        //    {
+        //        index = ~index;
+        //        return cache[key][index - 1].val;
+        //    }
+        //    else
+        //    {
+        //        return cache[key][index].val;
+        //    }
+
+        //    return "";
+        //}
+        public int maxProfit(int[] prices) // two transaction a day
+        {
+            int hold1 = int.MinValue, hold2 = int.MinValue;
+            int release1 = 0, release2 = 0;
+            foreach (int i in prices)
+            {                              // Assume we only have 0 money at first
+                release2 = Math.Max(release2, hold2 + i);     // The maximum if we've just sold 2nd stock so far.
+                hold2 = Math.Max(hold2, release1 - i);  // The maximum if we've just buy  2nd stock so far.
+                release1 = Math.Max(release1, hold1 + i);     // The maximum if we've just sold 1nd stock so far.
+                hold1 = Math.Max(hold1, -i);          // The maximum if we've just buy  1st stock so far. 
+            }
+            return release2; ///Since release1 is initiated as 0, so release2 will always higher than release1.
+        }
+
+        public int MaxProfit(int k, int[] prices)
+        {
+            int len = prices.Length;
+            if (k >= len / 2)
+                return QuickSolve(prices);
+
+            int[,] t = new int[k + 1, len];
+            for (int i = 1; i <= k; i++)
+            {
+                int tmpMax = -prices[0];
+                for (int j = 1; j < len; j++)
+                {
+                    t[i, j] = Math.Max(t[i, j - 1], prices[j] + tmpMax);
+                    tmpMax = Math.Max(tmpMax, t[i - 1, j - 1] - prices[j]);
+                }
+            }
+            return t[k, len - 1];
+        }
+        private int QuickSolve(int[] prices)
+        {
+            int len = prices.Length, profit = 0;
+            for (int i = 1; i < len; i++)                // as long as there is a price gap, we gain a profit.
+                if (prices[i] > prices[i - 1]) profit += prices[i] - prices[i - 1];
+            return profit;
+        }
+
+        public int MaxProfitFee(int[] prices, int fee)
+        {
+            int T_ik0 = 0, T_ik1 = int.MinValue;
+
+            foreach (int price in prices)
+            {
+                int T_ik0_old = T_ik0;
+                T_ik0 = Math.Max(T_ik0, T_ik1 + price);
+                T_ik1 = Math.Max(T_ik1, T_ik0_old - price - fee);
+            }
+
+            return T_ik0;
+        }
+
     }
 }
 
@@ -3282,4 +3521,4 @@ public class MedianFinderBin
         return count % 2 == 0 ? (double)((Nums[count / 2 - 1] + Nums[count / 2]) * 0.5) : Nums[count / 2];
     }
 }
-}
+ 
